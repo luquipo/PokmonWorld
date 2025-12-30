@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Pokémon World: Big Update</title>
+    <title>Pokémon World: Battle Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -153,28 +153,47 @@
         #battle-overlay::before, #battle-overlay::after { display: none; }
 
         .battle-scene { flex: 1; position: relative; }
-        .poke-container { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
         
-        /* Base de Grama Redonda */
+        /* FIX: Container flex-end para garantir que fiquem no chão */
+        .poke-container { 
+            position: absolute; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-end; /* Alinha tudo para baixo */
+        }
+        
+        /* FIX: Base de Grama Centralizada e Ajustada */
         .poke-container::after {
             content: ''; 
             position: absolute; 
-            bottom: 0px; 
-            width: 120%; 
-            height: 40px;
+            bottom: -8px; /* Move um pouco para baixo para simular profundidade */
+            left: 50%;
+            transform: translateX(-50%); /* Centraliza perfeitamente horizontalmente */
+            width: 90%; 
+            height: 30px;
             background-color: #71b16a;
             background-image: radial-gradient(circle at 40% 40%, #8cd182 0%, #71b16a 60%, #589652 100%);
             border: 3px solid #3c6e3c;
             border-radius: 50%; 
             z-index: 1;
-            transform: translateY(15px);
             box-shadow: 0 4px 0 rgba(0,0,0,0.1);
         }
 
         #opp-container { top: 40px; right: 50px; width: 140px; height: 140px; }
         #my-container { bottom: 60px; left: 50px; width: 180px; height: 180px; }
-        .poke-battle-img { width: 100%; height: 100%; object-fit: contain; z-index: 2; position: relative; animation: float 3s infinite; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        
+        /* FIX: Imagem alinhada na base do container (bottom center) */
+        .poke-battle-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            object-position: bottom center; /* O SEGREDO: Força a imagem a ficar no chão */
+            z-index: 2; 
+            position: relative; 
+            animation: float 3s infinite; 
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } } /* Reduzi o float para ficarem mais "no chão" */
 
         .battle-info { background: #fff; border: 3px solid #333; padding: 6px; width: 160px; border-radius: 0 10px; position: absolute; z-index: 20; box-shadow: 3px 3px rgba(0,0,0,0.2); }
         .info-opp { top: 20px; left: 20px; }
@@ -1496,9 +1515,46 @@
         allMons.forEach(name => {
             const isCaught = myState.collection.includes(name);
             const isShiny = myState.shinies.includes(name);
+            const isCurrent = myState.pokemon === name;
 
             const div = document.createElement('div');
             div.className = 'dex-entry';
+
+            // Highlight current pokemon
+            if (isCurrent) {
+                div.style.borderColor = '#4caf50';
+                div.style.backgroundColor = '#e8f5e9';
+            }
+
+            // Click to swap functionality
+            if (isCaught) {
+                div.onclick = () => {
+                    if (activeBattle) {
+                        sendEmote("Não posso trocar agora!");
+                        return;
+                    }
+                    if (isCurrent) return;
+
+                    // Swap Pokemon
+                    const oldMax = myState.maxHp;
+                    const hpPct = myState.hp / oldMax;
+
+                    myState.pokemon = name;
+                    
+                    // Recalculate stats for new species
+                    const newStats = calculateFullStats(name, myState.level);
+                    myState.maxHp = newStats.hp;
+                    myState.hp = Math.floor(newStats.hp * hpPct);
+                    if (myState.hp === 0 && hpPct > 0) myState.hp = 1; // Prevent accidental death
+
+                    saveGame();
+                    updateCloudState();
+                    syncView();
+                    updateHUD();
+                    sendEmote(`Vai ${name}!`);
+                    toggleUI('pokedex-overlay');
+                };
+            }
 
             const img = document.createElement('img');
             
