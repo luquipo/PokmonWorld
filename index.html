@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    <title>Pokémon World: Enhanced</title>
+    <title>Pokémon World: Big Update</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -17,6 +17,7 @@
             --ui-bg: #f8f8f8;
             --ui-border: #303030;
             --xp-color: #3498db;
+            --team-color: #9b59b6;
         }
 
         * { 
@@ -56,7 +57,6 @@
         #world { position: absolute; }
         .tile { position: absolute; width: 64px; height: 64px; }
         
-        /* Better Grass */
         .grass { 
             background-color: var(--grass); 
             background-image: 
@@ -67,13 +67,28 @@
             opacity: 0.8;
         }
 
-        /* Trees instead of walls */
+        /* Map Decorations */
+        .flower::after {
+            content: ''; position: absolute; top: 20px; left: 20px;
+            width: 8px; height: 8px; background: pink;
+            border-radius: 50%;
+            box-shadow: 12px 12px 0 yellow, -10px 15px 0 white;
+            opacity: 0.7;
+        }
+        .pebble::after {
+            content: ''; position: absolute; top: 40px; left: 10px;
+            width: 6px; height: 4px; background: #444;
+            border-radius: 2px;
+            box-shadow: 20px -20px 0 #555;
+            opacity: 0.6;
+        }
+
         .wall { 
             background-color: var(--tree-base);
             border-radius: 50%;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
             background-image: radial-gradient(circle at 30% 30%, var(--tree-light), transparent);
-            transform: scale(1.1); /* Overlap slightly */
+            transform: scale(1.1);
             z-index: 1;
         }
 
@@ -87,11 +102,17 @@
         .player-label { 
             background: rgba(255,255,255,0.9); color: #333; font-size: 6px; 
             padding: 3px 6px; border: 2px solid #303030; margin-bottom: 4px;
-            position: absolute; top: -30px; white-space: nowrap; border-radius: 4px;
+            position: absolute; top: -35px; white-space: nowrap; border-radius: 4px;
             z-index: 10; text-align: center; line-height: 1.2;
         }
         
-        /* Shiny Sparkle */
+        .team-tag {
+            color: var(--team-color);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
         .shiny-star {
             color: gold; text-shadow: 0 0 2px orange;
             animation: spin 1s infinite linear;
@@ -101,7 +122,7 @@
 
         .chat-bubble {
             background: #fff; border: 2px solid #000; border-radius: 8px;
-            padding: 5px 8px; position: absolute; top: -60px;
+            padding: 5px 8px; position: absolute; top: -65px;
             font-size: 8px; color: #000; white-space: nowrap;
             display: none; z-index: 20; box-shadow: 2px 2px rgba(0,0,0,0.2);
             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -116,19 +137,39 @@
 
         .sprite-img { width: 64px; height: 64px; object-fit: contain; z-index: 5; position: relative; }
 
-        /* Battle UI */
         #battle-overlay {
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F8CF 60%, #71b16a 100%);
+            background: #ffffff; /* Fundo Branco */
             display: none; flex-direction: column; padding: 10px; z-index: 2000;
         }
+        
+        /* Removed extra background elements */
+        #battle-overlay::before, #battle-overlay::after { display: none; }
+
         .battle-scene { flex: 1; position: relative; }
         .poke-container { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+        
+        /* Base de Grama Redonda */
+        .poke-container::after {
+            content: ''; 
+            position: absolute; 
+            bottom: 0px; 
+            width: 120%; 
+            height: 40px;
+            background-color: #71b16a;
+            background-image: radial-gradient(circle at 40% 40%, #8cd182 0%, #71b16a 60%, #589652 100%);
+            border: 3px solid #3c6e3c;
+            border-radius: 50%; 
+            z-index: 1;
+            transform: translateY(15px);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+
         #opp-container { top: 40px; right: 50px; width: 140px; height: 140px; }
         #my-container { bottom: 60px; left: 50px; width: 180px; height: 180px; }
         .poke-battle-img { width: 100%; height: 100%; object-fit: contain; z-index: 2; position: relative; animation: float 3s infinite; }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
-        .battle-info { background: #fff; border: 3px solid #333; padding: 6px; width: 160px; border-radius: 0 10px; position: absolute; z-index: 20; }
+        .battle-info { background: #fff; border: 3px solid #333; padding: 6px; width: 160px; border-radius: 0 10px; position: absolute; z-index: 20; box-shadow: 3px 3px rgba(0,0,0,0.2); }
         .info-opp { top: 20px; left: 20px; }
         .info-my { bottom: 140px; right: 20px; }
         
@@ -138,7 +179,6 @@
         .xp-fill { height: 100%; background: var(--xp-color); width: 0%; transition: width 0.6s; }
         .bar-text { position: absolute; inset: 0; font-size: 5px; color: #000; display: flex; align-items: center; justify-content: center; font-weight: bold; pointer-events: none; }
 
-        /* Mobile Controls Enhanced */
         #mobile-controls { 
             position: absolute; bottom: 30px; left: 30px; 
             display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); 
@@ -153,7 +193,6 @@
         }
         .d-btn:active { transform: translateY(4px); box-shadow: 0 0 #666; background: #ddd; }
 
-        /* Emote Bar */
         #emote-bar { position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 800; }
         .emote-btn { background: #fff; border: 2px solid #333; width: 45px; height: 45px; border-radius: 50%; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px rgba(0,0,0,0.3); }
 
@@ -162,16 +201,33 @@
         .btn:hover { background: #eee; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+        .dex-entry {
+            background: #fff;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            font-size: 8px;
+            cursor: pointer;
+            box-shadow: 2px 2px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        .dex-entry:hover {
+            transform: translateY(-2px);
+            background: #f0f0f0;
+        }
+
         .wild-ball { position: absolute; width: 64px; height: 64px; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; animation: bounce 0.6s infinite alternate; }
         @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-6px); } }
 
-        /* Evolution Improvements */
         #evo-overlay { 
             position: absolute; inset: 0; z-index: 3000; 
             display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; 
             background: radial-gradient(circle, #2a2a2a 0%, #000 100%);
         }
-        
         .evo-bg-particles {
             position: absolute; inset: 0; pointer-events: none;
             background-image: radial-gradient(white 2px, transparent 2px);
@@ -180,22 +236,15 @@
             animation: evo-bg-spin 10s linear infinite;
         }
         @keyframes evo-bg-spin { 0% { transform: rotate(0deg) scale(1.5); } 100% { transform: rotate(360deg) scale(1.5); } }
-
-        /* White glow Pulse */
         .evo-pulse { animation: evoPulseAnim 1.5s infinite; filter: brightness(100) drop-shadow(0 0 10px white); }
         @keyframes evoPulseAnim { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        
-        /* The Flash */
         .white-flash-screen {
             position: absolute; inset: 0; background: white; z-index: 3005;
             animation: flashFade 1s forwards; pointer-events: none;
         }
         @keyframes flashFade { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-
-        /* Reveal */
         .evo-reveal { animation: revealAnim 2s forwards; }
         @keyframes revealAnim { 0% { filter: brightness(100); } 100% { filter: brightness(1); } }
-        
         .confetti {
             position: absolute; width: 10px; height: 10px; background: #ffd700;
             animation: fall 2s linear forwards; z-index: 3002;
@@ -204,18 +253,100 @@
         
         #online-count { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 8px; z-index: 900; pointer-events: none; }
     
-        input[type="text"], input[type="number"], select {
+        input[type="text"], input[type="number"], select, input[type="email"], input[type="password"] {
             font-family: 'Press Start 2P', cursive;
             padding: 10px;
             border: 4px solid #333;
             margin-bottom: 20px;
-            font-size: 12px; /* Prevents iOS zoom */
-            text-transform: uppercase;
+            font-size: 12px;
             width: 80%;
             text-align: center;
         }
+        /* Auth specific styles */
+        #auth-screen {
+            position: absolute; inset: 0; z-index: 5000;
+            background: #111; display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white;
+            background-image: radial-gradient(circle at center, #222 0%, #000 100%);
+        }
+        .auth-logo {
+            font-size: 20px; color: #ffcc00; text-shadow: 4px 4px #2b6cb0;
+            margin-bottom: 30px; text-align: center; line-height: 1.5;
+        }
+        .auth-box {
+            background: #fff; padding: 20px; border-radius: 10px;
+            border: 4px solid #333; display: flex; flex-direction: column;
+            align-items: center; width: 300px;
+        }
+        
+        /* Chat box style */
+        #team-chat-box {
+            flex: 1; width: 100%; background: #222; border: 2px solid #444;
+            margin: 10px 0; padding: 10px; overflow-y: auto; color: white;
+            font-size: 8px; font-family: monospace; display: flex; flex-direction: column; gap: 4px;
+        }
+        
+        #capture-anim-layer {
+            position: absolute; inset: 0; pointer-events: none; z-index: 2050; display: none;
+        }
+        
+        /* Reverted to standard classes, animation now handled by JS for precision */
+        .ball-throw-container {
+            position: absolute;
+            width: 48px; /* Aumentado de 24px para 48px */
+            height: 48px; /* Aumentado de 24px para 48px */
+            z-index: 2060;
+        }
+        
+        .ball-visual {
+            width: 100%; height: 100%;
+            background-image: url('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png');
+            background-size: contain; background-repeat: no-repeat;
+        }
 
-        /* Challenge Modal */
+        .ball-bounce {
+            animation: bounceGround 0.4s ease-out;
+        }
+        @keyframes bounceGround {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0); }
+        }
+
+        .ball-light {
+            position: absolute; top: 50%; left: 50%;
+            width: 4px; height: 4px; border-radius: 50%;
+            background: #ff0000;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 5px red;
+            display: none;
+            z-index: 2061;
+        }
+        
+        .shake-left { animation: shakeL 0.15s 3 alternate; }
+        .shake-right { animation: shakeR 0.15s 3 alternate; }
+        @keyframes shakeL { 0% { transform: rotate(0deg); } 100% { transform: rotate(-25deg); } }
+        @keyframes shakeR { 0% { transform: rotate(0deg); } 100% { transform: rotate(25deg); } }
+
+        .capture-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; opacity: 0;
+            animation: flashBang 0.2s forwards;
+            pointer-events: none;
+            z-index: 2100;
+        }
+        @keyframes flashBang { 0% { opacity: 0.8; } 100% { opacity: 0; } }
+        
+        .energy-suck {
+            animation: suckAnim 0.5s forwards ease-in;
+            filter: sepia(1) hue-rotate(-50deg) saturate(5) brightness(1.2); 
+        }
+        @keyframes suckAnim {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.1); opacity: 0; }
+        }
+
         #challenge-modal {
             position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
             background: #fff; border: 4px solid #333; padding: 15px;
@@ -231,7 +362,6 @@
             cursor: pointer; display: none;
         }
         
-        /* Media query para telas pequenas/celulares */
         @media (max-width: 600px) {
             #mobile-controls { bottom: 20px; left: 10px; gap: 2px; }
             .d-btn { width: 50px; height: 50px; font-size: 18px; }
@@ -240,9 +370,9 @@
             .battle-info { width: 120px; font-size: 8px; }
             #opp-container { width: 100px; height: 100px; top: 50px; right: 20px; }
             #my-container { width: 120px; height: 120px; bottom: 80px; left: 20px; }
+            .auth-box { width: 90%; }
         }
         
-        /* Critical Hit Animation */
         .crit-text {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             color: yellow; font-size: 16px; font-weight: bold; text-shadow: 2px 2px red;
@@ -254,9 +384,23 @@
 <body>
 
 <div id="loading-screen" style="position:fixed; inset:0; background:#fff; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-    <div style="font-size: 12px; margin-bottom: 20px;">POKÉMON FANGAME ENHANCED</div>
-    <div id="loading-text" style="font-size: 8px; color: #666;">CONECTANDO AO SERVIDOR...</div>
-    <button id="btn-force-start" class="btn" style="display:none; margin-top:20px; border:2px solid #000; background:#eee;" onclick="forceStartGame()">JOGAR OFFLINE</button>
+    <div style="font-size: 12px; margin-bottom: 20px;">POKÉMON MMO</div>
+    <div id="loading-text" style="font-size: 8px; color: #666;">CONECTANDO...</div>
+</div>
+
+<!-- TELA DE LOGIN -->
+<div id="auth-screen">
+    <div class="auth-logo">POKÉMON<br>WORLD ONLINE</div>
+    <div class="auth-box">
+        <!-- Changed to Text input for Username -->
+        <input type="text" id="auth-username" placeholder="NOME DE USUÁRIO" maxlength="15" style="width:100%; color:black; text-transform:uppercase;">
+        <input type="password" id="auth-pass" placeholder="SENHA" style="width:100%; color:black;">
+        <div style="display:flex; gap:10px; margin-top:10px; width:100%; justify-content: center;">
+            <button class="btn" style="background:#4caf50; color:white; flex:1;" onclick="tryLogin()">ENTRAR</button>
+            <button class="btn" style="background:#3498db; color:white; flex:1;" onclick="tryRegister()">CRIAR</button>
+        </div>
+        <div id="auth-error" style="color:red; font-size:8px; margin-top:10px; text-align:center; min-height:10px;"></div>
+    </div>
 </div>
 
 <div id="game-container">
@@ -294,15 +438,18 @@
         <div style="position: absolute; top: 15px; right: 15px; z-index: 600; display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
             <div id="hud-stats" style="background: white; border: 2px solid #333; padding: 4px; font-size: 7px;">LV: ...</div>
             <div class="xp-container" style="width: 120px;"><div class="xp-bar"><div id="hud-xp-fill" class="xp-fill"></div></div></div>
-            <div style="display:flex; gap:5px;">
+            <div id="team-bonus-indicator" style="display:none; color: gold; font-size: 7px; background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 4px; margin-top: 2px;">🛡️ BÔNUS EQUIPE</div>
+            <div style="display:flex; gap:5px; flex-wrap: wrap; justify-content: flex-end;">
                 <button class="btn" style="background:#4caf50; color:white; padding: 5px; font-size: 8px;" onclick="healPokemon()">DESCANSAR</button>
+                <button class="btn" style="background:#3498db; color:white; padding: 5px; font-size: 8px;" onclick="toggleUI('team-overlay')">EQUIPE</button>
                 <button class="btn" style="background:#ff5555; color:white; padding: 5px; font-size: 8px;" onclick="toggleUI('pokedex-overlay')">POKÉDEX</button>
+                <button class="btn" style="background:#333; color:white; padding: 5px; font-size: 8px;" onclick="doLogout()">SAIR</button>
             </div>
         </div>
 
         <div id="start-screen" class="overlay">
             <h1 style="font-size: 10px; text-align: center;">BEM-VINDO TREINADOR</h1>
-            <input type="text" id="player-nick-input" placeholder="SEU NICKNAME" maxlength="10">
+            <p id="welcome-nick-text" style="font-size:8px; margin-bottom:10px; color:#4a90e2;"></p>
             <p style="font-size:8px; margin-bottom:10px;">ESCOLHA SEU INICIAL:</p>
             <div id="starter-list" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-top:20px;"></div>
         </div>
@@ -320,8 +467,32 @@
             <div id="pokedex-list" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap:10px; overflow-y:auto; flex:1;"></div>
             <button class="btn" style="margin-top: 15px;" onclick="toggleUI('pokedex-overlay')">VOLTAR</button>
         </div>
+        
+        <!-- TEAM OVERLAY -->
+        <div id="team-overlay" class="overlay">
+            <h2 style="font-size: 12px; color: var(--team-color);">EQUIPE</h2>
+            <div id="team-login-panel" style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:20px;">
+                <p style="font-size:8px; text-align:center; line-height:1.5;">DIGITE O NOME DA EQUIPE<br>PARA CRIAR OU ENTRAR:</p>
+                <input type="text" id="team-input-name" placeholder="NOME DA EQUIPE" maxlength="10">
+                <button class="btn" style="background:var(--team-color); color:white;" onclick="joinTeam()">ENTRAR</button>
+            </div>
+            <div id="team-active-panel" style="display:none; flex-direction:column; height:100%;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span id="my-team-name" style="color: var(--team-color); font-weight:bold;">NOME</span>
+                    <button class="btn" style="padding:4px; font-size:6px; background:#ff5555; color:white;" onclick="leaveTeam()">SAIR</button>
+                </div>
+                <div style="font-size:7px; color:#666; margin-bottom:5px;">CHAT DA EQUIPE:</div>
+                <div id="team-chat-box"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="team-chat-input" placeholder="MENSAGEM..." style="flex:1; margin-bottom:0; font-size:8px;">
+                    <button class="btn" style="padding:8px;" onclick="sendTeamMessage()">➤</button>
+                </div>
+            </div>
+            <button class="btn" style="margin-top: 15px;" onclick="toggleUI('team-overlay')">VOLTAR</button>
+        </div>
 
         <div id="battle-overlay" class="overlay">
+            <div id="capture-anim-layer"></div>
             <div class="battle-scene">
                 <div id="battle-turn-indicator" style="position:absolute; top:5px; left:0; right:0; text-align:center; font-size:8px; color:white; text-shadow:1px 1px 0 #000; z-index:50;"></div>
                 <div class="battle-info info-opp">
@@ -362,15 +533,13 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, updateDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, updateDoc, deleteDoc, serverTimestamp, addDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Proteção contra falha na config automática
     let firebaseConfig;
     try {
         firebaseConfig = JSON.parse(__firebase_config);
     } catch (e) {
-        // Fallback genérico caso o utilizador esteja a testar noutro ambiente sem config
         firebaseConfig = { 
             apiKey: "AIzaSyCN9iZvaHoS-kOLEORfHGUgqb-jIR3UL4I",
             authDomain: "p004001025150.firebaseapp.com",
@@ -391,7 +560,7 @@
     const GRID_SIZE = 40;
     const XP_PER_LEVEL = 100;
 
-    // --- Stats Data ---
+    // --- Stats & Data (EXPANDED) ---
     const baseStats = {
         'Bulbasaur': { hp: 45, atk: 49, def: 49 }, 'Ivysaur': { hp: 60, atk: 62, def: 63 }, 'Venusaur': { hp: 80, atk: 82, def: 83 },
         'Charmander': { hp: 39, atk: 52, def: 43 }, 'Charmeleon': { hp: 58, atk: 64, def: 58 }, 'Charizard': { hp: 78, atk: 84, def: 78 },
@@ -418,19 +587,54 @@
         'Snorlax': { hp: 160, atk: 110, def: 65 },
         'Dragonite': { hp: 91, atk: 134, def: 95 },
         'Mewtwo': { hp: 106, atk: 110, def: 90 },
-        
-        // Gen 2 Additions
-        'Chikorita': { hp: 45, atk: 49, def: 65 }, 'Bayleef': { hp: 60, atk: 62, def: 80 }, 'Meganium': { hp: 80, atk: 82, def: 100 },
-        'Cyndaquil': { hp: 39, atk: 52, def: 43 }, 'Quilava': { hp: 58, atk: 64, def: 58 }, 'Typhlosion': { hp: 78, atk: 84, def: 78 },
-        'Totodile': { hp: 50, atk: 65, def: 64 }, 'Croconaw': { hp: 65, atk: 80, def: 80 }, 'Feraligatr': { hp: 85, atk: 105, def: 100 },
-        'Sentret': { hp: 35, atk: 46, def: 34 }, 'Furret': { hp: 85, atk: 76, def: 64 },
-        'Togepi': { hp: 35, atk: 20, def: 65 }, 'Togetic': { hp: 55, atk: 40, def: 85 },
-        'Mareep': { hp: 55, atk: 40, def: 40 }, 'Flaaffy': { hp: 70, atk: 55, def: 55 }, 'Ampharos': { hp: 90, atk: 75, def: 85 },
-        'Marill': { hp: 70, atk: 20, def: 50 }, 'Azumarill': { hp: 100, atk: 50, def: 80 },
-        'Sudowoodo': { hp: 70, atk: 100, def: 115 },
-        'Wooper': { hp: 55, atk: 45, def: 45 }, 'Quagsire': { hp: 95, atk: 85, def: 85 },
-        'Scizor': { hp: 70, atk: 130, def: 100 }, 'Heracross': { hp: 80, atk: 125, def: 75 },
-        'Tyranitar': { hp: 100, atk: 134, def: 110 }
+        // --- NEW ADDITIONS ---
+        'NidoranF': { hp: 55, atk: 47, def: 52 }, 'Nidorina': { hp: 70, atk: 62, def: 67 }, 'Nidoqueen': { hp: 90, atk: 92, def: 87 },
+        'NidoranM': { hp: 46, atk: 57, def: 40 }, 'Nidorino': { hp: 61, atk: 72, def: 57 }, 'Nidoking': { hp: 81, atk: 102, def: 77 },
+        'Clefairy': { hp: 70, atk: 45, def: 48 }, 'Clefable': { hp: 95, atk: 70, def: 73 },
+        'Vulpix': { hp: 38, atk: 41, def: 40 }, 'Ninetales': { hp: 73, atk: 76, def: 75 },
+        'Oddish': { hp: 45, atk: 50, def: 55 }, 'Gloom': { hp: 60, atk: 65, def: 70 }, 'Vileplume': { hp: 75, atk: 80, def: 85 },
+        'Paras': { hp: 35, atk: 70, def: 55 }, 'Parasect': { hp: 60, atk: 95, def: 80 },
+        'Venonat': { hp: 60, atk: 55, def: 50 }, 'Venomoth': { hp: 70, atk: 65, def: 60 },
+        'Diglett': { hp: 10, atk: 55, def: 25 }, 'Dugtrio': { hp: 35, atk: 80, def: 50 },
+        'Mankey': { hp: 40, atk: 80, def: 35 }, 'Primeape': { hp: 65, atk: 105, def: 60 },
+        'Poliwag': { hp: 40, atk: 50, def: 40 }, 'Poliwhirl': { hp: 65, atk: 65, def: 65 }, 'Poliwrath': { hp: 90, atk: 95, def: 95 },
+        'Bellsprout': { hp: 50, atk: 75, def: 35 }, 'Weepinbell': { hp: 65, atk: 90, def: 50 }, 'Victreebel': { hp: 80, atk: 105, def: 65 },
+        'Tentacool': { hp: 40, atk: 40, def: 35 }, 'Tentacruel': { hp: 80, atk: 70, def: 65 },
+        'Ponyta': { hp: 50, atk: 85, def: 55 }, 'Rapidash': { hp: 65, atk: 100, def: 70 },
+        'Slowpoke': { hp: 90, atk: 65, def: 65 }, 'Slowbro': { hp: 95, atk: 75, def: 110 },
+        'Magnemite': { hp: 25, atk: 35, def: 70 }, 'Magneton': { hp: 50, atk: 60, def: 95 },
+        'Doduo': { hp: 35, atk: 85, def: 45 }, 'Dodrio': { hp: 60, atk: 110, def: 70 },
+        'Seel': { hp: 65, atk: 45, def: 55 }, 'Dewgong': { hp: 90, atk: 70, def: 80 },
+        'Grimer': { hp: 80, atk: 80, def: 50 }, 'Muk': { hp: 105, atk: 105, def: 75 },
+        'Shellder': { hp: 30, atk: 65, def: 100 }, 'Cloyster': { hp: 50, atk: 95, def: 180 },
+        'Drowzee': { hp: 60, atk: 48, def: 45 }, 'Hypno': { hp: 85, atk: 73, def: 70 },
+        'Krabby': { hp: 30, atk: 105, def: 90 }, 'Kingler': { hp: 55, atk: 130, def: 115 },
+        'Voltorb': { hp: 40, atk: 30, def: 50 }, 'Electrode': { hp: 60, atk: 50, def: 70 },
+        'Exeggcute': { hp: 60, atk: 40, def: 80 }, 'Exeggutor': { hp: 95, atk: 95, def: 85 },
+        'Hitmonlee': { hp: 50, atk: 120, def: 53 }, 'Hitmonchan': { hp: 50, atk: 105, def: 79 },
+        'Koffing': { hp: 40, atk: 65, def: 95 }, 'Weezing': { hp: 65, atk: 90, def: 120 },
+        'Rhyhorn': { hp: 80, atk: 85, def: 95 }, 'Rhydon': { hp: 105, atk: 130, def: 120 },
+        'Chansey': { hp: 250, atk: 5, def: 5 },
+        'Tangela': { hp: 65, atk: 55, def: 115 },
+        'Kangaskhan': { hp: 105, atk: 95, def: 80 },
+        'Horsea': { hp: 30, atk: 40, def: 70 }, 'Seadra': { hp: 55, atk: 65, def: 95 },
+        'Goldeen': { hp: 45, atk: 67, def: 60 }, 'Seaking': { hp: 80, atk: 92, def: 65 },
+        'Staryu': { hp: 30, atk: 45, def: 55 }, 'Starmie': { hp: 60, atk: 75, def: 85 },
+        'Scyther': { hp: 70, atk: 110, def: 80 },
+        'Jynx': { hp: 65, atk: 50, def: 35 },
+        'Electabuzz': { hp: 65, atk: 83, def: 57 },
+        'Magmar': { hp: 65, atk: 95, def: 57 },
+        'Pinsir': { hp: 65, atk: 125, def: 100 },
+        'Tauros': { hp: 75, atk: 100, def: 95 },
+        'Porygon': { hp: 65, atk: 60, def: 70 },
+        'Omanyte': { hp: 35, atk: 40, def: 100 }, 'Omastar': { hp: 70, atk: 60, def: 125 },
+        'Kabuto': { hp: 30, atk: 80, def: 90 }, 'Kabutops': { hp: 60, atk: 115, def: 105 },
+        'Aerodactyl': { hp: 80, atk: 105, def: 65 },
+        'Dratini': { hp: 41, atk: 64, def: 45 }, 'Dragonair': { hp: 61, atk: 84, def: 65 },
+        'Articuno': { hp: 90, atk: 85, def: 100 },
+        'Zapdos': { hp: 90, atk: 90, def: 85 },
+        'Moltres': { hp: 90, atk: 100, def: 90 },
+        'Ditto': { hp: 48, atk: 48, def: 48 }
     };
 
     const evolutionMap = {
@@ -455,29 +659,63 @@
         'Cubone': 'Marowak',
         'Magikarp': 'Gyarados',
         'Eevee': 'Vaporeon',
-        'Chikorita': 'Bayleef', 'Bayleef': 'Meganium',
-        'Cyndaquil': 'Quilava', 'Quilava': 'Typhlosion',
-        'Totodile': 'Croconaw', 'Croconaw': 'Feraligatr',
-        'Sentret': 'Furret',
-        'Togepi': 'Togetic',
-        'Mareep': 'Flaaffy', 'Flaaffy': 'Ampharos',
-        'Marill': 'Azumarill',
-        'Wooper': 'Quagsire'
+        // --- EVOLUTION ADDITIONS ---
+        'NidoranF': 'Nidorina', 'Nidorina': 'Nidoqueen',
+        'NidoranM': 'Nidorino', 'Nidorino': 'Nidoking',
+        'Clefairy': 'Clefable',
+        'Vulpix': 'Ninetales',
+        'Oddish': 'Gloom', 'Gloom': 'Vileplume',
+        'Paras': 'Parasect',
+        'Venonat': 'Venomoth',
+        'Diglett': 'Dugtrio',
+        'Mankey': 'Primeape',
+        'Poliwag': 'Poliwhirl', 'Poliwhirl': 'Poliwrath',
+        'Bellsprout': 'Weepinbell', 'Weepinbell': 'Victreebel',
+        'Tentacool': 'Tentacruel',
+        'Ponyta': 'Rapidash',
+        'Slowpoke': 'Slowbro',
+        'Magnemite': 'Magneton',
+        'Doduo': 'Dodrio',
+        'Seel': 'Dewgong',
+        'Grimer': 'Muk',
+        'Shellder': 'Cloyster',
+        'Drowzee': 'Hypno',
+        'Krabby': 'Kingler',
+        'Voltorb': 'Electrode',
+        'Exeggcute': 'Exeggutor',
+        'Koffing': 'Weezing',
+        'Rhyhorn': 'Rhydon',
+        'Horsea': 'Seadra',
+        'Goldeen': 'Seaking',
+        'Staryu': 'Starmie',
+        'Omanyte': 'Omastar',
+        'Kabuto': 'Kabutops',
+        'Dratini': 'Dragonair', 'Dragonair': 'Dragonite'
     };
 
     const spawnCategories = {
         basic: [
             'Bulbasaur', 'Charmander', 'Squirtle', 'Pikachu', 'Eevee', 'Psyduck', 'Snorlax', 'Lapras',
             'Caterpie', 'Weedle', 'Pidgey', 'Rattata', 'Zubat', 'Meowth', 'Abra', 'Machop', 'Geodude', 'Gastly', 'Magikarp', 'Cubone',
-            'Chikorita', 'Cyndaquil', 'Totodile', 'Sentret', 'Togepi', 'Mareep', 'Marill', 'Wooper', 'Sudowoodo'
+            // New Basics
+            'NidoranF', 'NidoranM', 'Clefairy', 'Vulpix', 'Oddish', 'Paras', 'Venonat', 'Diglett', 'Mankey', 'Poliwag', 
+            'Bellsprout', 'Tentacool', 'Ponyta', 'Slowpoke', 'Magnemite', 'Doduo', 'Seel', 'Grimer', 'Shellder', 'Drowzee',
+            'Krabby', 'Voltorb', 'Exeggcute', 'Koffing', 'Rhyhorn', 'Horsea', 'Goldeen', 'Staryu', 'Ditto'
         ],
         rare: [
             'Gengar', 'Arcanine', 'Metapod', 'Kakuna', 'Pidgeotto', 'Raticate', 'Jigglypuff', 'Persian', 'Kadabra', 'Machoke', 'Graveler', 'Haunter', 'Onix', 'Marowak', 'Gyarados',
-            'Bayleef', 'Quilava', 'Croconaw', 'Furret', 'Togetic', 'Flaaffy', 'Azumarill', 'Quagsire', 'Espeon', 'Umbreon', 'Scizor', 'Heracross'
+            // New Rares
+            'Nidorina', 'Nidorino', 'Clefable', 'Ninetales', 'Gloom', 'Parasect', 'Venomoth', 'Dugtrio', 'Primeape', 'Poliwhirl',
+            'Weepinbell', 'Tentacruel', 'Rapidash', 'Slowbro', 'Magneton', 'Dodrio', 'Dewgong', 'Muk', 'Cloyster', 'Hypno',
+            'Kingler', 'Electrode', 'Exeggutor', 'Weezing', 'Rhydon', 'Seadra', 'Seaking', 'Starmie', 
+            'Hitmonlee', 'Hitmonchan', 'Chansey', 'Tangela', 'Kangaskhan', 'Scyther', 'Jynx', 'Electabuzz', 'Magmar', 'Pinsir', 'Tauros', 'Porygon', 'Dratini', 'Dragonair',
+            'Omanyte', 'Kabuto', 'Aerodactyl'
         ],
         legendary: [
             'Dragonite', 'Mewtwo', 'Butterfree', 'Beedrill', 'Pidgeot', 'Wigglytuff', 'Golbat', 'Alakazam', 'Machamp', 'Golem',
-            'Meganium', 'Typhlosion', 'Feraligatr', 'Ampharos', 'Tyranitar', 'Steelix'
+            // New Legendary Tier / Fully Evolved
+            'Nidoqueen', 'Nidoking', 'Vileplume', 'Poliwrath', 'Victreebel', 'Omastar', 'Kabutops', 
+            'Articuno', 'Zapdos', 'Moltres'
         ]
     };
 
@@ -500,18 +738,54 @@
         'Onix': 95, 'Steelix': 208,
         'Cubone': 104, 'Marowak': 105,
         'Magikarp': 129, 'Gyarados': 130,
-        'Chikorita': 152, 'Bayleef': 153, 'Meganium': 154,
-        'Cyndaquil': 155, 'Quilava': 156, 'Typhlosion': 157,
-        'Totodile': 158, 'Croconaw': 159, 'Feraligatr': 160,
-        'Sentret': 161, 'Furret': 162,
-        'Togepi': 175, 'Togetic': 176,
-        'Mareep': 179, 'Flaaffy': 180, 'Ampharos': 181,
-        'Marill': 183, 'Azumarill': 184,
-        'Sudowoodo': 185,
-        'Wooper': 194, 'Quagsire': 195,
-        'Espeon': 196, 'Umbreon': 197,
-        'Scizor': 212, 'Heracross': 214,
-        'Tyranitar': 248
+        // --- NEW IDs ---
+        'NidoranF': 29, 'Nidorina': 30, 'Nidoqueen': 31,
+        'NidoranM': 32, 'Nidorino': 33, 'Nidoking': 34,
+        'Clefairy': 35, 'Clefable': 36,
+        'Vulpix': 37, 'Ninetales': 38,
+        'Oddish': 43, 'Gloom': 44, 'Vileplume': 45,
+        'Paras': 46, 'Parasect': 47,
+        'Venonat': 48, 'Venomoth': 49,
+        'Diglett': 50, 'Dugtrio': 51,
+        'Mankey': 56, 'Primeape': 57,
+        'Poliwag': 60, 'Poliwhirl': 61, 'Poliwrath': 62,
+        'Bellsprout': 69, 'Weepinbell': 70, 'Victreebel': 71,
+        'Tentacool': 72, 'Tentacruel': 73,
+        'Ponyta': 77, 'Rapidash': 78,
+        'Slowpoke': 79, 'Slowbro': 80,
+        'Magnemite': 81, 'Magneton': 82,
+        'Doduo': 84, 'Dodrio': 85,
+        'Seel': 86, 'Dewgong': 87,
+        'Grimer': 88, 'Muk': 89,
+        'Shellder': 90, 'Cloyster': 91,
+        'Drowzee': 96, 'Hypno': 97,
+        'Krabby': 98, 'Kingler': 99,
+        'Voltorb': 100, 'Electrode': 101,
+        'Exeggcute': 102, 'Exeggutor': 103,
+        'Hitmonlee': 106, 'Hitmonchan': 107,
+        'Koffing': 109, 'Weezing': 110,
+        'Rhyhorn': 111, 'Rhydon': 112,
+        'Chansey': 113,
+        'Tangela': 114,
+        'Kangaskhan': 115,
+        'Horsea': 116, 'Seadra': 117,
+        'Goldeen': 118, 'Seaking': 119,
+        'Staryu': 120, 'Starmie': 121,
+        'Scyther': 123,
+        'Jynx': 124,
+        'Electabuzz': 125,
+        'Magmar': 126,
+        'Pinsir': 127,
+        'Tauros': 128,
+        'Porygon': 137,
+        'Omanyte': 138, 'Omastar': 139,
+        'Kabuto': 140, 'Kabutops': 141,
+        'Aerodactyl': 142,
+        'Articuno': 144,
+        'Zapdos': 145,
+        'Moltres': 146,
+        'Dratini': 147, 'Dragonair': 148,
+        'Ditto': 132
     };
 
     let currentUser = null;
@@ -520,13 +794,14 @@
         nickname: 'Treinador',
         pokemon: '', 
         collection: [],
-        shinies: [], // New: Store shiny catches separately to not break strings
+        shinies: [],
         level: 5, 
         xp: 0,
         hp: 100, 
         maxHp: 100,
         emote: '',
-        battleInvite: null
+        battleInvite: null,
+        team: ''
     };
 
     let remotePlayers = {};
@@ -537,23 +812,20 @@
     let emoteTimeout = null;
     let pvpSubscription = null;
     let pendingInviteFrom = null;
+    let teamChatSubscription = null;
 
-    // --- Authentication & Loading Protection ---
-    setTimeout(() => {
-        const btn = document.getElementById('btn-force-start');
-        const loadScreen = document.getElementById('loading-screen');
-        if(btn && loadScreen.style.display !== 'none') {
-            btn.style.display = 'block';
-            document.getElementById('loading-text').innerText = "DEMORANDO MUITO?";
-        }
-    }, 6000);
+    // --- AUTHENTICATION LOGIC ---
 
-    window.forceStartGame = () => {
-         document.getElementById('loading-screen').style.display = 'none';
-         if(myState.pokemon) startGame();
-         else showStarterSelection();
-    };
+    const authScreen = document.getElementById('auth-screen');
+    const loadingScreen = document.getElementById('loading-screen');
+    const authError = document.getElementById('auth-error');
 
+    function showError(msg) {
+        authError.innerText = msg;
+        setTimeout(() => authError.innerText = "", 3000);
+    }
+
+    // Initialize Anonymous Auth immediately
     const initAuth = async () => {
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -563,31 +835,115 @@
             }
         } catch (err) {
             console.error("Auth error", err);
-            document.getElementById('loading-text').innerText = "ERRO DE CONEXÃO. TENTE RECARREGAR.";
-            document.getElementById('btn-force-start').style.display = 'block';
+            document.getElementById('loading-text').innerText = "ERRO CONEXÃO";
         }
     };
     initAuth();
 
-    onAuthStateChanged(auth, async (u) => {
-        if (!u) return;
-        currentUser = u;
+    function sanitizeUser(user) {
+        return user.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    }
+
+    window.tryLogin = async () => {
+        const rawUser = document.getElementById('auth-username').value;
+        const pass = document.getElementById('auth-pass').value;
+        const user = sanitizeUser(rawUser);
+        
+        if (!user || !pass) return showError("PREENCHA NOME E SENHA");
+        if (user.length < 3) return showError("NOME MUITO CURTO");
+
+        // Check credentials in Firestore
         try {
-            const savePath = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'saveData', 'game');
+            const accRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', user);
+            const snap = await getDoc(accRef);
+            
+            if (!snap.exists()) {
+                return showError("USUÁRIO NÃO ENCONTRADO");
+            }
+            
+            const data = snap.data();
+            if (data.password !== pass) {
+                return showError("SENHA INCORRETA");
+            }
+
+            // Login Success
+            myState.nickname = user;
+            loadGameData(user);
+        } catch(e) {
+            console.error(e);
+            showError("ERRO NO LOGIN");
+        }
+    };
+
+    window.tryRegister = async () => {
+        const rawUser = document.getElementById('auth-username').value;
+        const pass = document.getElementById('auth-pass').value;
+        const user = sanitizeUser(rawUser);
+
+        if (!user || !pass) return showError("PREENCHA NOME E SENHA");
+        if (user.length < 3) return showError("NOME MUITO CURTO (MIN 3)");
+        if (pass.length < 4) return showError("SENHA MUITO CURTA (MIN 4)");
+
+        try {
+            const accRef = doc(db, 'artifacts', appId, 'public', 'data', 'accounts', user);
+            const snap = await getDoc(accRef);
+            
+            if (snap.exists()) {
+                return showError("USUÁRIO JÁ EXISTE");
+            }
+
+            // Create Account
+            await setDoc(accRef, {
+                password: pass,
+                created: serverTimestamp()
+            });
+
+            // Login Success
+            myState.nickname = user;
+            authScreen.style.display = 'none';
+            showStarterSelection();
+        } catch (e) {
+            console.error(e);
+            showError("ERRO AO CRIAR CONTA");
+        }
+    };
+
+    async function loadGameData(username) {
+        authScreen.style.display = 'none';
+        loadingScreen.style.display = 'flex';
+        document.getElementById('loading-text').innerText = "CARREGANDO...";
+        
+        try {
+            const savePath = doc(db, 'artifacts', appId, 'public', 'data', 'saves', username);
             const snap = await getDoc(savePath);
+            
             if (snap.exists()) {
                 const data = snap.data();
                 myState = { ...myState, ...data };
-                if (!myState.shinies) myState.shinies = []; // Init shiny array for old saves
+                if (!myState.shinies) myState.shinies = []; 
+                if (!myState.team) myState.team = '';
                 if(myState.x < 1) myState.x = 20; if(myState.y < 1) myState.y = 20;
                 startGame();
             } else {
                 showStarterSelection();
             }
-        } catch (e) {
-            console.error("Load error", e);
+        } catch(e) {
+            console.error(e);
             showStarterSelection();
         }
+    }
+
+    window.doLogout = async () => {
+        location.reload();
+    }
+
+    // --- Main Logic ---
+
+    onAuthStateChanged(auth, async (u) => {
+        if (!u) return;
+        currentUser = u;
+        loadingScreen.style.display = 'none';
+        authScreen.style.display = 'flex';
     });
 
     // --- Multiplayer System ---
@@ -609,9 +965,9 @@
                 }
             });
             updateOnlineCount();
+            checkTeamBonus();
         });
 
-        // Periodic cleanup for stale players (20s timeout)
         setInterval(() => {
             const now = Date.now();
             let changed = false;
@@ -623,10 +979,12 @@
                     changed = true;
                 }
             });
-            if (changed) updateOnlineCount();
+            if (changed) {
+                updateOnlineCount();
+                checkTeamBonus();
+            }
         }, 5000);
         
-        // Heartbeat to keep self alive even if idle
         setInterval(() => {
              updateCloudState();
         }, 10000);
@@ -648,7 +1006,8 @@
                 level: myState.level,
                 emote: myState.emote || "",
                 battleInvite: myState.battleInvite || null,
-                isShiny: myState.shinies.includes(myState.pokemon), // Sync shiny status
+                isShiny: myState.shinies.includes(myState.pokemon),
+                team: myState.team || "",
                 timestamp: serverTimestamp()
             }, { merge: true });
         } catch(e) { console.error("Sync error", e); }
@@ -665,7 +1024,8 @@
             remotePlayers[id] = el;
         }
         
-        // Update timestamp for cleanup
+        el.dataset.team = data.team || ""; // Store team in DOM for easy check
+        
         if (data.timestamp) {
             el.dataset.lastSeen = data.timestamp.toMillis();
         } else {
@@ -676,7 +1036,10 @@
         el.style.top = data.y * TILE_SIZE + 'px';
         el.style.zIndex = data.y + 10;
         const nick = data.nickname || 'TREINADOR';
-        el.querySelector('.player-label').innerHTML = `${nick}<br><span style="color:#666; font-size:5px;">LV.${data.level} ${data.pokemon}</span>`;
+        
+        let labelHTML = `<span class="team-tag">${data.team ? '['+data.team+']' : ''}</span>${nick}<br><span style="color:#666; font-size:5px;">LV.${data.level} ${data.pokemon}</span>`;
+        
+        el.querySelector('.player-label').innerHTML = labelHTML;
         const sprite = el.querySelector('.sprite-img');
         const newSrc = getSprite(data.pokemon, true, data.isShiny);
         if(sprite.src !== newSrc) sprite.src = newSrc;
@@ -706,6 +1069,110 @@
     function updateOnlineCount() {
         const total = Object.keys(remotePlayers).length + 1;
         document.getElementById('online-count').innerText = `Online: ${total}`;
+    }
+
+    // --- Team System Logic ---
+    
+    window.joinTeam = async () => {
+        const input = document.getElementById('team-input-name');
+        const teamName = input.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        
+        if (teamName.length < 3) {
+            alert("Nome da equipe muito curto (min 3 letras)!");
+            return;
+        }
+        
+        myState.team = teamName;
+        saveGame();
+        updateCloudState();
+        updateTeamUI();
+        syncView(); // Refresh player label
+        
+        // Connect to chat
+        setupTeamChat(teamName);
+    };
+    
+    window.leaveTeam = async () => {
+        myState.team = '';
+        saveGame();
+        updateCloudState();
+        updateTeamUI();
+        syncView();
+        
+        if (teamChatSubscription) {
+            teamChatSubscription();
+            teamChatSubscription = null;
+        }
+        document.getElementById('team-chat-box').innerHTML = '';
+    };
+    
+    function updateTeamUI() {
+        const loginPanel = document.getElementById('team-login-panel');
+        const activePanel = document.getElementById('team-active-panel');
+        
+        if (myState.team) {
+            loginPanel.style.display = 'none';
+            activePanel.style.display = 'flex';
+            document.getElementById('my-team-name').innerText = '[' + myState.team + ']';
+            // Trigger chat load
+            if (!teamChatSubscription) setupTeamChat(myState.team);
+        } else {
+            loginPanel.style.display = 'flex';
+            activePanel.style.display = 'none';
+        }
+    }
+    
+    function setupTeamChat(teamName) {
+        const chatRef = collection(db, 'artifacts', appId, 'public', 'data', 'team_chats', teamName, 'messages');
+        const q = query(chatRef, orderBy('timestamp', 'desc'), limit(20));
+        
+        teamChatSubscription = onSnapshot(q, (snapshot) => {
+            const box = document.getElementById('team-chat-box');
+            box.innerHTML = '';
+            const msgs = [];
+            snapshot.forEach(doc => msgs.push(doc.data()));
+            msgs.reverse().forEach(msg => {
+                const line = document.createElement('div');
+                line.style.color = msg.author === myState.nickname ? '#aaa' : '#fff';
+                line.innerHTML = `<span style="color:${msg.author===myState.nickname?'#888':'#9b59b6'}">${msg.author}:</span> ${msg.text}`;
+                box.appendChild(line);
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+    
+    window.sendTeamMessage = async () => {
+        if (!myState.team) return;
+        const input = document.getElementById('team-chat-input');
+        const text = input.value.trim();
+        if (!text) return;
+        
+        const chatRef = collection(db, 'artifacts', appId, 'public', 'data', 'team_chats', myState.team, 'messages');
+        await addDoc(chatRef, {
+            author: myState.nickname,
+            text: text,
+            timestamp: serverTimestamp()
+        });
+        input.value = '';
+    };
+
+    function checkTeamBonus() {
+        if (!myState.team) {
+            document.getElementById('team-bonus-indicator').style.display = 'none';
+            return false;
+        }
+        
+        // Check if any remote player has the same team
+        const hasTeammate = Object.values(remotePlayers).some(el => el.dataset.team === myState.team);
+        
+        const ind = document.getElementById('team-bonus-indicator');
+        if (hasTeammate) {
+            ind.style.display = 'block';
+            return true;
+        } else {
+            ind.style.display = 'none';
+            return false;
+        }
     }
 
     // --- PVP Logic ---
@@ -825,6 +1292,11 @@
     // --- Game Logic ---
     function showStarterSelection() {
         document.getElementById('loading-screen').style.display = 'none';
+        
+        if (myState.nickname) {
+            document.getElementById('welcome-nick-text').innerText = `OLÁ, ${myState.nickname}!`;
+        }
+
         const starters = ['Bulbasaur', 'Charmander', 'Squirtle'];
         document.getElementById('starter-list').innerHTML = starters.map(name => `
             <div class="btn" onclick="chooseStarter('${name}')" style="text-align:center;">
@@ -835,9 +1307,10 @@
     }
 
     window.chooseStarter = async (name) => {
-        const nickInput = document.getElementById('player-nick-input');
-        const nick = nickInput.value.trim().toUpperCase() || 'TREINADOR';
-        myState.nickname = nick;
+        if (!myState.nickname || myState.nickname === 'Treinador') {
+             myState.nickname = 'TREINADOR';
+        }
+        
         myState.pokemon = name;
         myState.collection = [name];
         myState.shinies = [];
@@ -855,7 +1328,7 @@
 
     async function saveGame() {
         if (!currentUser) return;
-        const savePath = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'saveData', 'game');
+        const savePath = doc(db, 'artifacts', appId, 'public', 'data', 'saves', myState.nickname);
         const { emote, battleInvite, ...saveData } = myState; 
         try { await setDoc(savePath, saveData); } catch(e) {}
     }
@@ -866,10 +1339,15 @@
         generateMap();
         syncView(true);
         updateHUD();
+        updateTeamUI(); // Check if already in team
         setupMultiplayer();
         setInterval(spawnWildItems, 5000);
         window.addEventListener('keydown', (e) => {
             if (activeBattle) return;
+            // Prevent movement if typing in team chat
+            if (document.activeElement === document.getElementById('team-chat-input')) return;
+            if (document.activeElement === document.getElementById('team-input-name')) return;
+            
             if (['ArrowUp', 'w'].includes(e.key)) handleMove('up');
             if (['ArrowDown', 's'].includes(e.key)) handleMove('down');
             if (['ArrowLeft', 'a'].includes(e.key)) handleMove('left');
@@ -884,7 +1362,17 @@
         for (let y = 0; y < GRID_SIZE; y++) {
             for (let x = 0; x < GRID_SIZE; x++) {
                 const div = document.createElement('div');
-                div.className = 'tile ' + (x === 0 || y === 0 || x === GRID_SIZE - 1 || y === GRID_SIZE - 1 ? 'wall' : 'grass');
+                let tileType = (x === 0 || y === 0 || x === GRID_SIZE - 1 || y === GRID_SIZE - 1 ? 'wall' : 'grass');
+                
+                // Add decorations (flowers and pebbles) to grass tiles randomly
+                let decorationClass = '';
+                if (tileType === 'grass') {
+                    const r = Math.random();
+                    if (r > 0.95) decorationClass = 'flower';
+                    else if (r > 0.92) decorationClass = 'pebble';
+                }
+
+                div.className = `tile ${tileType} ${decorationClass}`;
                 div.style.left = x * TILE_SIZE + 'px'; div.style.top = y * TILE_SIZE + 'px';
                 frag.appendChild(div);
             }
@@ -937,19 +1425,113 @@
         p.style.zIndex = myState.y + 10;
         document.getElementById('my-sprite').src = getSprite(myState.pokemon, true, myState.shinies.includes(myState.pokemon));
         const nick = myState.nickname || 'VOCÊ';
-        document.getElementById('p-label-local').innerText = `LV.${myState.level} ${myState.pokemon}`;
+        
+        let labelHTML = `<span class="team-tag">${myState.team ? '['+myState.team+']' : ''}</span>${nick}<br><span style="color:#666; font-size:5px;">LV.${myState.level} ${myState.pokemon}</span>`;
+        document.getElementById('p-label-local').innerHTML = labelHTML;
+        
         const cx = (viewport.offsetWidth / 2) - (myState.x * TILE_SIZE) - 32;
         const cy = (viewport.offsetHeight / 2) - (myState.y * TILE_SIZE) - 32;
         track.style.transform = `translate(${cx}px, ${cy}px)`;
         if (immediate) { track.offsetHeight; track.style.transition = ''; }
+        
+        // Re-check bonus since we moved
+        checkTeamBonus();
     }
+    
+    // --- Helper Functions - UI ---
+    
+    function updateHUD() {
+        document.getElementById('hud-stats').innerText = `LV:${myState.level} ${myState.pokemon} HP:${myState.hp}/${myState.maxHp}`;
+        const pct = (myState.xp / XP_PER_LEVEL) * 100;
+        document.getElementById('hud-xp-fill').style.width = pct + '%';
+        
+        const pokedex = document.getElementById('pokedex-overlay');
+        if (pokedex.style.display === 'flex') {
+            updatePokedexUI();
+        }
+    }
+    
+    window.toggleUI = (id) => {
+        const el = document.getElementById(id);
+        if (el.style.display === 'flex') {
+            el.style.display = 'none';
+        } else {
+            el.style.display = 'flex';
+            if(id === 'pokedex-overlay') updatePokedexUI();
+        }
+    };
+    
+    function updatePokedexUI() {
+        const list = document.getElementById('pokedex-list');
+        list.innerHTML = '';
+        
+        const allMons = Object.keys(pokeIDs).sort((a,b) => {
+            const idA = pokeIDs[a] || 999;
+            const idB = pokeIDs[b] || 999;
+            return idA - idB;
+        });
+        
+        allMons.forEach(name => {
+            const isCaught = myState.collection.includes(name);
+            const isShiny = myState.shinies.includes(name);
+
+            const div = document.createElement('div');
+            div.className = 'dex-entry';
+
+            const img = document.createElement('img');
+            
+            if (isCaught) {
+                img.src = getSprite(name, false, isShiny);
+                img.style.filter = 'none';
+            } else {
+                img.src = getSprite(name, false, false);
+                img.style.filter = 'brightness(0) opacity(0.5)';
+            }
+
+            img.style.width = '40px';
+            img.style.height = '40px';
+            
+            const id = pokeIDs[name];
+            const num = id.toString().padStart(3, '0');
+            const numDiv = document.createElement('div');
+            numDiv.style.fontSize = '5px';
+            numDiv.style.color = '#666';
+            numDiv.innerText = '#' + num;
+            
+            div.appendChild(numDiv);
+            div.appendChild(img);
+            
+            const textDiv = document.createElement('div');
+            textDiv.innerText = isCaught ? name : '???';
+            div.appendChild(textDiv);
+
+            list.appendChild(div);
+        });
+    }
+
+    window.toggleFullScreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(e => console.log(e));
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    };
 
     // --- Helper Functions ---
     function calculateFullStats(name, level) {
         const b = baseStats[name] || { hp: 50, atk: 50, def: 50 };
-        const hp = Math.floor((b.hp * 2 * level) / 100) + level + 30;
-        const atk = Math.floor((b.atk * 2 * level) / 100) + 5;
-        const def = Math.floor((b.def * 2 * level) / 100) + 5;
+        let hp = Math.floor((b.hp * 2 * level) / 100) + level + 30;
+        let atk = Math.floor((b.atk * 2 * level) / 100) + 5;
+        let def = Math.floor((b.def * 2 * level) / 100) + 5;
+        
+        // TEAM BONUS: If teammate is nearby, increase stats by 10%
+        if (checkTeamBonus()) {
+            atk = Math.floor(atk * 1.1);
+            def = Math.floor(def * 1.1);
+        }
+        
         return { hp, atk, def };
     }
 
@@ -989,22 +1571,16 @@
         let pool = spawnCategories.basic;
         let lvBonus = 0;
 
-        // Logic for Ball Types & Rarity
-        // Ultra Ball (5% chance): High chance for Legendary/Rare
         if (randType > 0.95) { 
             ballType = 'ultra-ball';
-            // 50% Legendary, 50% Rare
             pool = Math.random() > 0.5 ? spawnCategories.legendary : spawnCategories.rare;
             lvBonus = 5; 
         } 
-        // Great Ball (15% chance): High chance for Rare
         else if (randType > 0.80) { 
             ballType = 'great-ball';
-            // 70% Rare, 30% Basic
             pool = Math.random() > 0.3 ? spawnCategories.rare : spawnCategories.basic;
             lvBonus = 2;
         } 
-        // Poke Ball (80% chance): Standard Logic
         else {
             const rand = Math.random();
             if (rand > 0.98 && myState.level >= 20) pool = spawnCategories.legendary;
@@ -1018,7 +1594,6 @@
         let lv = Math.max(1, myState.level + Math.floor(Math.random() * 4) + 1 + lvBonus);
         if (spawnCategories.legendary.includes(name)) lv = Math.max(30, lv);
         
-        // Shiny Chance 1/50
         const isShiny = Math.random() < 0.02;
 
         const div = document.createElement('div');
@@ -1049,16 +1624,24 @@
         document.getElementById('opp-name').innerHTML = nameHTML;
         document.getElementById('opp-lv').innerText = `LV: ${lv}`;
         document.getElementById('opp-sprite').src = getSprite(name, true, isShiny);
+        
+        const oppSprite = document.getElementById('opp-sprite');
+        oppSprite.className = 'poke-battle-img'; // reset class
+        oppSprite.style.transform = 'scale(1)';
+        oppSprite.style.opacity = '1';
+        oppSprite.style.filter = 'none';
+
         document.getElementById('my-battle-sprite').src = getBackSprite(myState.pokemon, myState.shinies.includes(myState.pokemon));
         document.getElementById('my-name-display').innerText = myState.nickname || 'VOCÊ';
         document.getElementById('my-lv-display').innerText = `LV: ${myState.level}`;
         document.getElementById('btn-capture').style.display = 'block';
         document.getElementById('btn-run').innerText = "FUGIR";
         
-        // FIX: Force enable buttons in case they were disabled
         const btnAttack = document.getElementById('btn-attack');
-        btnAttack.disabled = false;
-        btnAttack.style.opacity = '1';
+        const btnCapture = document.getElementById('btn-capture');
+        const btnRun = document.getElementById('btn-run');
+        [btnAttack, btnCapture, btnRun].forEach(b => { b.disabled = false; b.style.opacity = '1'; b.style.pointerEvents = 'auto'; });
+
         document.getElementById('battle-turn-indicator').innerText = "SUA VEZ!";
         
         updateWildUI();
@@ -1070,7 +1653,6 @@
         let dmg = calculateDamage(myState.level, myS.atk, battleOpponent.def);
         let msg = `${myState.pokemon} atacou!`;
         
-        // Critical Chance 1/16
         if (Math.random() < 0.0625) {
             dmg *= 2;
             msg += " ACERTO CRÍTICO!";
@@ -1113,7 +1695,6 @@
         if (!isMyTurn || !activeBattle) return;
         isMyTurn = false;
         
-        // Visual feedback immediately
         const btnAttack = document.getElementById('btn-attack');
         btnAttack.disabled = true;
         btnAttack.style.opacity = '0.5';
@@ -1128,7 +1709,6 @@
             const oppData = data[`data_${opponentId}`];
             const myStats = calculateFullStats(myData.pokemon, myData.level); 
             let dmg = calculateDamage(myData.level, myStats.atk, oppData.def);
-             // Crit in PvP
             let critMsg = "";
             if (Math.random() < 0.0625) { dmg *= 2; critMsg = " (CRÍTICO!)"; showCritAnim(); }
             
@@ -1159,41 +1739,200 @@
             }, 1000);
         } else {
             isMyTurn = true;
-            // FIX: Re-enable attack button after enemy turn
             const btnAttack = document.getElementById('btn-attack');
-            btnAttack.disabled = false;
-            btnAttack.style.opacity = '1';
+            const btnCapture = document.getElementById('btn-capture');
+            const btnRun = document.getElementById('btn-run');
+            
+            [btnAttack, btnCapture, btnRun].forEach(b => { 
+                b.disabled = false; 
+                b.style.opacity = '1'; 
+                b.style.pointerEvents = 'auto'; 
+            });
+
             document.getElementById('battle-turn-indicator').innerText = "SUA VEZ!";
         }
     }
 
-    window.performCapture = () => {
+    // --- UPDATED CAPTURE ANIMATION (FIXED POSITIONING) ---
+    window.performCapture = async () => {
         if (!isMyTurn || !activeBattle) return;
-        if (typeof battleOpponent === 'string') return;
+        if (typeof battleOpponent === 'string') return; 
         isMyTurn = false;
         
-        // Disable during capture attempt
+        // Disable buttons
         const btnAttack = document.getElementById('btn-attack');
-        btnAttack.disabled = true;
-        btnAttack.style.opacity = '0.5';
+        const btnCapture = document.getElementById('btn-capture');
+        const btnRun = document.getElementById('btn-run');
+        [btnAttack, btnCapture, btnRun].forEach(b => { b.disabled = true; b.style.opacity = '0.5'; b.style.pointerEvents = 'none'; });
 
         document.getElementById('battle-log').innerText = "Lançando Pokébola...";
-        setTimeout(() => {
-            const hpFactor = (battleOpponent.maxHp - battleOpponent.hp) / battleOpponent.maxHp;
-            const chance = 0.15 + (hpFactor * 0.4); 
-            if (Math.random() < chance) {
-                document.getElementById('battle-log').innerText = "Capturado com sucesso!";
-                if (!myState.collection.includes(battleOpponent.name)) myState.collection.push(battleOpponent.name);
-                if (battleOpponent.isShiny && !myState.shinies.includes(battleOpponent.name)) {
-                     myState.shinies.push(battleOpponent.name);
-                }
-                addXP(40);
-                setTimeout(endBattle, 1500);
-            } else {
-                document.getElementById('battle-log').innerText = "Escapou!";
-                setTimeout(wildEnemyTurn, 1000);
-            }
-        }, 1200);
+
+        const layer = document.getElementById('capture-anim-layer');
+        layer.innerHTML = '';
+        layer.style.display = 'block';
+        const oppSprite = document.getElementById('opp-sprite');
+
+        // Create the Ball Structure
+        const ballContainer = document.createElement('div');
+        ballContainer.className = 'ball-throw-container';
+        
+        const ballVisual = document.createElement('div');
+        ballVisual.className = 'ball-visual';
+        
+        const ballLight = document.createElement('div');
+        ballLight.className = 'ball-light';
+        
+        ballVisual.appendChild(ballLight);
+        ballContainer.appendChild(ballVisual);
+        layer.appendChild(ballContainer);
+        
+        // Calculate Dynamic Start & End Points (Relative to layer)
+        const mySprite = document.getElementById('my-battle-sprite');
+        const myRect = mySprite.getBoundingClientRect();
+        const oppRect = oppSprite.getBoundingClientRect();
+        const layerRect = layer.getBoundingClientRect();
+
+        // New Offset for larger ball (48px / 2 = 24px)
+        const ballOffset = 24;
+
+        // Start Center of Player Sprite
+        const startX = (myRect.left + myRect.width / 2) - layerRect.left - ballOffset; 
+        const startY = (myRect.top + myRect.height / 2) - layerRect.top - ballOffset;
+
+        // End Center of Opponent Sprite
+        const endX = (oppRect.left + oppRect.width / 2) - layerRect.left - ballOffset;
+        const endY = (oppRect.top + oppRect.height / 2) - layerRect.top - ballOffset;
+        
+        // Midpoint for Arc (Mid X, Higher Y)
+        const midX = (startX + endX) / 2;
+        const midY = Math.min(startY, endY) - 150; // Go up 150px higher than highest point
+
+        // Set Initial
+        ballContainer.style.left = startX + 'px';
+        ballContainer.style.top = startY + 'px';
+
+        // 1. Throw Animation using WAAPI for precision arc
+        const throwAnim = ballContainer.animate([
+            { transform: `translate(0, 0) scale(1)` },
+            { transform: `translate(${midX - startX}px, ${midY - startY}px) scale(1.2)`, offset: 0.5 },
+            { transform: `translate(${endX - startX}px, ${endY - startY}px) scale(0.8)` }
+        ], {
+            duration: 800,
+            easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+            fill: 'forwards'
+        });
+        
+        // Spin while throwing
+        const spinAnim = ballVisual.animate([
+            { transform: 'rotate(0deg)' },
+            { transform: 'rotate(720deg)' }
+        ], { duration: 800, fill: 'forwards' });
+
+        await throwAnim.finished;
+        
+        // Update position to end so we don't snap back when animation clears (though fill forwards handles it visually, good practice to set)
+        ballContainer.style.left = endX + 'px';
+        ballContainer.style.top = endY + 'px';
+
+        // 2. Impact
+        const flash = document.createElement('div');
+        flash.className = 'capture-flash';
+        document.querySelector('.battle-scene').appendChild(flash);
+        setTimeout(() => flash.remove(), 250);
+
+        oppSprite.classList.add('energy-suck');
+        await new Promise(r => setTimeout(r, 400)); 
+        oppSprite.style.opacity = '0';
+
+        // 3. Drop & Bounce
+        // Reset rotation visually
+        ballVisual.style.transform = 'rotate(0deg)';
+        spinAnim.cancel();
+
+        // Animate Drop to "ground" (approx + 100px relative to sprite center? depends on sprite size)
+        // Opponent sprite usually floats a bit. Let's drop it 60px down from center.
+        const groundY = 60; 
+        
+        const dropAnim = ballContainer.animate([
+            { transform: 'translate(0, 0)' },
+            { transform: `translate(0, ${groundY}px)` }
+        ], { 
+            duration: 500, 
+            easing: 'bounce', // Native bounce easing keyword not always avail, use cubic
+            easing: 'cubic-bezier(0.6, 0.05, 0.9, 0.3)',
+            fill: 'forwards'
+        });
+        
+        await dropAnim.finished;
+        ballContainer.style.top = (endY + groundY) + 'px'; // Update real top
+        dropAnim.cancel(); // Clear transform
+        
+        // Bounce visual
+        ballVisual.classList.add('ball-bounce');
+        await new Promise(r => setTimeout(r, 400));
+        ballVisual.classList.remove('ball-bounce');
+
+        // 4. Shake Logic
+        const hpFactor = (battleOpponent.maxHp - battleOpponent.hp) / battleOpponent.maxHp;
+        const catchRate = 0.25 + (hpFactor * 0.5); 
+        const isCaught = Math.random() < catchRate;
+        
+        let shakeCount = isCaught ? 3 : Math.floor(Math.random() * 3);
+        ballLight.style.display = 'block'; 
+
+        for(let i=1; i<=3; i++) {
+             if (i > shakeCount && !isCaught) break;
+             await new Promise(r => setTimeout(r, 600)); 
+             ballVisual.className = 'ball-visual ' + (i % 2 === 0 ? 'shake-right' : 'shake-left');
+             document.getElementById('battle-log').innerText = (i===1?".": (i===2?"..": "..."));
+             ballLight.style.background = '#ff0000';
+             ballLight.style.boxShadow = '0 0 8px red';
+             await new Promise(r => setTimeout(r, 300)); 
+             ballLight.style.background = '#880000'; 
+             ballLight.style.boxShadow = 'none';
+        }
+
+        ballLight.style.display = 'none';
+        ballVisual.className = 'ball-visual';
+
+        // 5. Result
+        if (isCaught) {
+             document.getElementById('battle-log').innerText = `Gotcha! ${battleOpponent.name} capturado!`;
+             ballVisual.style.filter = 'brightness(0.5)';
+             
+             for(let k=0; k<5; k++) {
+                const star = document.createElement('div');
+                star.innerHTML = '✨';
+                star.style.position = 'absolute';
+                star.style.left = (endX + (Math.random()*40 - 20)) + 'px'; // Absolute relative to layer
+                star.style.top = (endY + groundY + (Math.random()*40 - 20)) + 'px';
+                star.style.fontSize = '16px';
+                star.style.zIndex = '2100';
+                star.style.animation = `critPop 0.8s forwards ${k*0.1}s`;
+                layer.appendChild(star);
+             }
+
+             if (!myState.collection.includes(battleOpponent.name)) myState.collection.push(battleOpponent.name);
+             if (battleOpponent.isShiny && !myState.shinies.includes(battleOpponent.name)) {
+                  myState.shinies.push(battleOpponent.name);
+             }
+             addXP(40);
+             await new Promise(r => setTimeout(r, 2000));
+             endBattle();
+        } else {
+             document.getElementById('battle-log').innerText = "Ah não! Escapou!";
+             ballContainer.style.opacity = '0';
+             oppSprite.classList.remove('energy-suck');
+             oppSprite.style.opacity = '1';
+             oppSprite.style.filter = 'brightness(100) white-drop-shadow(0 0 5px white)';
+             
+             await new Promise(r => setTimeout(r, 100));
+             oppSprite.style.filter = 'none'; 
+             
+             await new Promise(r => setTimeout(r, 1500));
+             layer.style.display = 'none';
+             wildEnemyTurn();
+        }
     };
 
     window.performRun = () => { 
@@ -1209,6 +1948,15 @@
         activeBattle = false;
         if (battleOpponent?.el) battleOpponent.el.remove();
         document.getElementById('battle-overlay').style.display = 'none';
+        
+        const oppSprite = document.getElementById('opp-sprite');
+        if(oppSprite) {
+            oppSprite.style.transform = 'scale(1)';
+            oppSprite.style.opacity = '1';
+            oppSprite.className = 'poke-battle-img'; // reset
+        }
+        document.getElementById('capture-anim-layer').innerHTML = '';
+        
         saveGame();
         battleOpponent = null;
         if(pvpSubscription) { pvpSubscription(); pvpSubscription = null; }
@@ -1220,7 +1968,7 @@
             myState.xp -= XP_PER_LEVEL;
             myState.level++;
             const nextForm = evolutionMap[myState.pokemon];
-            const isStage0 = Object.keys(evolutionMap).includes(myState.pokemon); // Simple check
+            const isStage0 = Object.keys(evolutionMap).includes(myState.pokemon); 
             const evoLevel = isStage0 ? 16 : 32;
             if (nextForm && myState.level >= evoLevel) {
                 await triggerEvolution(nextForm);
@@ -1238,7 +1986,6 @@
         const imgMain = document.getElementById('evo-img-main');
         const resultText = document.getElementById('evo-result');
 
-        // Reset
         resultText.innerText = "O quê? " + oldName + " está a evoluir!";
         imgMain.src = getSprite(oldName, true, isShiny);
         imgMain.classList.remove('evo-pulse', 'evo-reveal');
@@ -1247,32 +1994,26 @@
         
         await new Promise(r => setTimeout(r, 1000));
         
-        // Pulse Effect (Getting Ready)
         imgMain.classList.add('evo-pulse');
-        await new Promise(r => setTimeout(r, 2000)); // Wait for 2-3 pulses
+        await new Promise(r => setTimeout(r, 2000)); 
         
-        // The Flash
         const flash = document.createElement('div');
         flash.className = 'white-flash-screen';
         overlay.appendChild(flash);
         
-        // Wait for flash to cover screen
         await new Promise(r => setTimeout(r, 250));
         
-        // Change Data underneath flash
         myState.pokemon = newName;
         if (!myState.collection.includes(newName)) myState.collection.push(newName);
         if (isShiny && !myState.shinies.includes(newName)) myState.shinies.push(newName);
 
-        // Change Image & Style
         imgMain.src = getSprite(newName, true, isShiny);
         imgMain.classList.remove('evo-pulse');
-        imgMain.classList.add('evo-reveal'); // Starts white, fades to normal
+        imgMain.classList.add('evo-reveal'); 
         
-        await new Promise(r => setTimeout(r, 800)); // Flash fades out
+        await new Promise(r => setTimeout(r, 800)); 
         flash.remove();
         
-        // Confetti
         for(let i=0; i<30; i++) {
             const conf = document.createElement('div');
             conf.className = 'confetti';
@@ -1292,47 +2033,6 @@
         syncView();
         updateCloudState();
     }
-
-    function updateHUD() {
-        document.getElementById('hud-stats').innerText = `LV: ${myState.level} | ${myState.pokemon}`;
-        document.getElementById('hud-xp-fill').style.width = (myState.xp % XP_PER_LEVEL) + "%";
-    }
-
-    window.toggleUI = (id) => {
-        const el = document.getElementById(id);
-        const isOpen = el.style.display === 'flex';
-        document.querySelectorAll('.overlay').forEach(o => o.style.display = 'none');
-        if (!isOpen) {
-            el.style.display = 'flex';
-            if (id === 'pokedex-overlay') renderPokedex();
-        }
-    };
-
-    function renderPokedex() {
-        const list = document.getElementById('pokedex-list');
-        list.innerHTML = Object.keys(pokeIDs).map(name => {
-            const caught = myState.collection.includes(name);
-            const isShiny = myState.shinies && myState.shinies.includes(name);
-            const filter = caught ? 'none' : 'grayscale(1) brightness(0.5)';
-            return `
-                <div class="btn" style="text-align:center; filter:${filter}; position:relative;" onclick="${caught?`switchPoke('${name}')`:''}">
-                    ${isShiny ? '<div style="position:absolute; top:2px; right:2px;">✨</div>' : ''}
-                    <img src="${getSprite(name, false, isShiny)}" width="40"><br>
-                    <span style="font-size:5px;">${caught?name:'???'}<br></span>
-                </div>
-            `;
-        }).join('');
-    }
-
-    window.switchPoke = async (name) => {
-        myState.pokemon = name;
-        const s = calculateFullStats(name, myState.level);
-        myState.hp = s.hp; myState.maxHp = s.hp;
-        await saveGame();
-        syncView();
-        updateCloudState();
-        toggleUI('pokedex-overlay');
-    };
 </script>
 </body>
 </html>
