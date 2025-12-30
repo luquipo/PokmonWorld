@@ -28,6 +28,13 @@
             image-rendering: pixelated;
         }
 
+        /* FIX: Permitir interação com inputs no mobile */
+        input, textarea, select {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            touch-action: auto !important;
+        }
+
         body, html {
             margin: 0; padding: 0; height: 100%; overflow: hidden;
             font-family: 'Press Start 2P', cursive; background-color: #111;
@@ -258,7 +265,7 @@
             padding: 10px;
             border: 4px solid #333;
             margin-bottom: 20px;
-            font-size: 12px;
+            font-size: 16px; /* Aumentado para 16px para evitar zoom automático no iOS e melhorar leitura */
             width: 80%;
             text-align: center;
         }
@@ -1179,10 +1186,20 @@
     window.sendChallenge = async (targetId, targetName) => {
         if(activeBattle) return;
         if(!confirm(`Desafiar ${targetName} para uma batalha?`)) return;
+        
+        // FIX: Gerar ID e limpar batalha antiga IMEDIATAMENTE para evitar carregar dados velhos
+        const battleId = [currentUser.uid, targetId].sort().join('_'); 
+        try {
+            // Remove o documento da batalha anterior, se existir
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'battles', battleId));
+        } catch(e) {
+            // Ignora erro se o doc não existir
+        }
+
         myState.battleInvite = targetId; 
         await updateCloudState();
         sendEmote("Desafiando...");
-        const battleId = [currentUser.uid, targetId].sort().join('_'); 
+        
         monitorBattleRoom(battleId, targetName);
     }
 
@@ -1282,10 +1299,15 @@
             document.getElementById('battle-log').innerText = "VOCÊ PERDEU...";
             myState.hp = myState.maxHp;
         }
-        setTimeout(() => {
+        setTimeout(async () => {
              document.getElementById('battle-overlay').style.display = 'none';
              saveGame();
              updateCloudState();
+             
+             // FIX: Limpar o registro da batalha no final para não bugar a próxima
+             try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'battles', battleId));
+             } catch(e) {}
         }, 3000);
     }
 
